@@ -4,12 +4,19 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 from typing import Optional
+from pathlib import Path
 import httpx
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 import mcp.server.stdio
+from dotenv import load_dotenv
 
 from .auth import WithingsAuth
+
+# Load .env file from project root
+env_path = Path(__file__).parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
 
 
 class WithingsServer:
@@ -216,7 +223,7 @@ class WithingsServer:
             except Exception as e:
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
 
-    async def _make_request(self, endpoint: str, params: dict) -> dict:
+    async def _make_request(self, endpoint: str, params: dict, retry_on_401: bool = True) -> dict:
         """Make authenticated request to Withings API."""
         headers = self.auth.get_headers()
         async with httpx.AsyncClient() as client:
@@ -225,9 +232,17 @@ class WithingsServer:
                 headers=headers,
                 params=params,
             )
-            response.raise_for_status()
+
+            # Don't raise for status yet - check for 401 first
             data = response.json()
 
+            # Handle 401 - token expired, try refresh and retry once
+            if data.get("status") == 401 and retry_on_401:
+                await self.auth.refresh_access_token()
+                # Retry the request with new token
+                return await self._make_request(endpoint, params, retry_on_401=False)
+
+            # Check for other API errors
             if data.get("status") != 0:
                 raise Exception(f"API error: {data}")
 

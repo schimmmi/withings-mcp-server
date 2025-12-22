@@ -134,8 +134,15 @@ class WithingsAuth:
         if not self.access_token:
             raise Exception("No access token available. Please authenticate first.")
 
+        # If no expiry time is set, try to use the token
+        # If it fails with 401, the API will tell us and we can refresh
+        if self.token_expires_at is None:
+            # Token loaded from env without expiry - try a test request
+            # If it fails, the caller will need to handle it
+            return
+
         # Refresh if token expires in less than 5 minutes
-        if self.token_expires_at and datetime.now() >= self.token_expires_at - timedelta(minutes=5):
+        if datetime.now() >= self.token_expires_at - timedelta(minutes=5):
             await self.refresh_access_token()
 
     def get_headers(self) -> dict:

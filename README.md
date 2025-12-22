@@ -276,22 +276,23 @@ To use the server with Claude Desktop, add the following to your MCP configurati
 
 ### Local Python Configuration
 
+**Note:** The server automatically loads credentials from `.env` file in the project root. You don't need to specify tokens in the config.
+
 ```json
 {
   "mcpServers": {
     "withings": {
-      "command": "/path/to/.venv/bin/python",
-      "args": ["-m", "withings_mcp_server"],
-      "env": {
-        "WITHINGS_CLIENT_ID": "your_client_id",
-        "WITHINGS_CLIENT_SECRET": "your_client_secret",
-        "WITHINGS_ACCESS_TOKEN": "your_access_token",
-        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
-      }
+      "command": "/path/to/withings-mcp-server/.venv/bin/python",
+      "args": ["-m", "withings_mcp_server"]
     }
   }
 }
 ```
+
+The server will automatically:
+- Load credentials from `.env` file
+- Refresh expired tokens
+- Save refreshed tokens back to `.env`
 
 ## Example Usage
 
@@ -335,10 +336,20 @@ If Claude Desktop shows "Request timed out" when connecting:
 
 3. **Update Claude Desktop config** to use the correct Python path
 
-### Token refresh issues
+### Token expired errors
 
-- Tokens are automatically refreshed when they expire
-- If refresh fails, generate new tokens using `python generate_tokens.py`
+If you get `invalid_token` or 401 errors:
+
+1. **The server now auto-refreshes tokens**, but if that fails:
+   ```bash
+   cd /path/to/withings-mcp-server
+   source .venv/bin/activate
+   python generate_tokens.py
+   ```
+
+2. **Restart Claude Desktop** to pick up the new tokens
+
+**Note:** Tokens are stored in `.env` and automatically refreshed. Don't put tokens in `claude_desktop_config.json` - the server loads them from `.env` automatically.
 
 ## Notes
 
