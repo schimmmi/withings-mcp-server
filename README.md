@@ -11,6 +11,11 @@ An MCP (Model Context Protocol) server for integration with the Withings Health 
 - **Workout Data**: Training sessions and details
 - **Heart Rate**: Intraday heart rate measurements
 
+## Requirements
+
+- **Python 3.10, 3.11, or 3.12** (Python 3.13+ is not yet supported by the MCP SDK)
+- Withings API credentials (Client ID and Client Secret)
+
 ## Installation
 
 ### Option 1: Docker (Recommended)
@@ -55,8 +60,8 @@ docker-compose up -d
 1. **Clone repository and install dependencies:**
 
 ```bash
-# Create virtual environment (recommended)
-python -m venv .venv
+# IMPORTANT: Use Python 3.12 or lower (3.13+ not yet supported)
+python3.12 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
@@ -309,8 +314,35 @@ For more details about the Withings API:
 
 MIT
 
+## Troubleshooting
+
+### Server times out on initialization
+
+If Claude Desktop shows "Request timed out" when connecting:
+
+1. **Check Python version**: The MCP SDK requires Python 3.10-3.12 (3.13+ not supported)
+   ```bash
+   /path/to/.venv/bin/python --version
+   ```
+
+2. **Recreate virtual environment with correct Python version**:
+   ```bash
+   rm -rf .venv
+   python3.12 -m venv .venv
+   source .venv/bin/activate
+   pip install -e .
+   ```
+
+3. **Update Claude Desktop config** to use the correct Python path
+
+### Token refresh issues
+
+- Tokens are automatically refreshed when they expire
+- If refresh fails, generate new tokens using `python generate_tokens.py`
+
 ## Notes
 
+- **Python 3.13+ is not yet supported** by the MCP SDK (use 3.10-3.12)
 - Tokens are automatically refreshed when they expire
 - All dates can be specified as YYYY-MM-DD or Unix timestamp
 - The API is subject to Withings rate limits (see API documentation)

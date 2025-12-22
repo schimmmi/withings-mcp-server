@@ -15,7 +15,10 @@ class WithingsAuth:
     TOKEN_URL = f"{BASE_URL}/v2/oauth2"
 
     def __init__(self, env_file: Optional[str] = None):
-        self.env_file = Path(env_file) if env_file else self._find_env_file()
+        # Lazy-load env_file only when needed for writes
+        self._env_file_path = env_file
+        self._env_file_cached: Optional[Path] = None
+
         self.client_id = os.getenv("WITHINGS_CLIENT_ID")
         self.client_secret = os.getenv("WITHINGS_CLIENT_SECRET")
         self.redirect_uri = os.getenv("WITHINGS_REDIRECT_URI", "http://localhost:8080/callback")
@@ -26,6 +29,16 @@ class WithingsAuth:
         # Load tokens from environment if available
         self.access_token = os.getenv("WITHINGS_ACCESS_TOKEN")
         self.refresh_token = os.getenv("WITHINGS_REFRESH_TOKEN")
+
+    @property
+    def env_file(self) -> Path:
+        """Lazy-load env file path only when needed."""
+        if self._env_file_cached is None:
+            self._env_file_cached = (
+                Path(self._env_file_path) if self._env_file_path
+                else self._find_env_file()
+            )
+        return self._env_file_cached
 
     def _find_env_file(self) -> Path:
         """Find .env file in current directory or parent directories."""
