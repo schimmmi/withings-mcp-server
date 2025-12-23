@@ -98,7 +98,7 @@ class WithingsServer:
                 ),
                 Tool(
                     name="get_sleep_summary",
-                    description="Get sleep summary data (duration, deep sleep, REM, wake up count, etc.)",
+                    description="Get sleep summary data (duration, deep sleep, REM, wake up count, breathing disturbances, apnea, etc.)",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -113,6 +113,10 @@ class WithingsServer:
                             "lastupdate": {
                                 "type": "string",
                                 "description": "Get sleep data modified since this timestamp",
+                            },
+                            "data_fields": {
+                                "type": "string",
+                                "description": "Comma-separated list of data fields to include (e.g., 'breathing_disturbances_intensity,apnea_hypopnea_index,snoring,rr_average'). If not specified, returns default fields.",
                             },
                         },
                     },
@@ -308,6 +312,8 @@ class WithingsServer:
             params["enddateymd"] = args["enddateymd"]
         if "lastupdate" in args:
             params["lastupdate"] = self._parse_date(args["lastupdate"])
+        if "data_fields" in args:
+            params["data_fields"] = args["data_fields"]
 
         return await self._make_request("/v2/sleep", params)
 
