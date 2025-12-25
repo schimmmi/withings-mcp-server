@@ -10,6 +10,7 @@ An MCP (Model Context Protocol) server for integration with the Withings Health 
 - **Sleep Data**: Sleep duration, deep sleep, REM sleep, wake-up counts
 - **Workout Data**: Training sessions and details
 - **Heart Rate**: Intraday heart rate measurements
+- **Automatic Timezone Conversion**: All timestamps are automatically converted from UTC to your local timezone
 
 ## Requirements
 
@@ -357,3 +358,4 @@ If you get `invalid_token` or 401 errors:
 - Tokens are automatically refreshed when they expire
 - All dates can be specified as YYYY-MM-DD or Unix timestamp
 - The API is subject to Withings rate limits (see API documentation)
+- **Timestamps are converted to local timezone**: All date/time fields in responses are automatically converted from UTC to your local timezone in ISO 8601 format (e.g., `2025-12-25T14:30:00+01:00`)

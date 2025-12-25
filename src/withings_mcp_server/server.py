@@ -2,8 +2,8 @@
 
 import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
 from pathlib import Path
 import httpx
 from mcp.server import Server
@@ -222,6 +222,9 @@ class WithingsServer:
                 else:
                     raise ValueError(f"Unknown tool: {name}")
 
+                # Convert UTC timestamps to local time
+                result = self._convert_utc_to_local(result)
+
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
             except Exception as e:
@@ -267,6 +270,33 @@ class WithingsServer:
             return int(dt.timestamp())
         except ValueError:
             raise ValueError(f"Invalid date format: {date_str}. Use YYYY-MM-DD or Unix timestamp")
+
+    def _convert_utc_to_local(self, data: Any) -> Any:
+        """Convert UTC timestamps to local time in ISO format with timezone.
+
+        Recursively processes dictionaries and lists, converting timestamp fields.
+        Common timestamp fields: date, startdate, enddate, created, modified, lastupdate
+        """
+        if isinstance(data, dict):
+            converted = {}
+            for key, value in data.items():
+                # Check if this looks like a timestamp field
+                if key in ['date', 'startdate', 'enddate', 'created', 'modified', 'lastupdate', 'start', 'end']:
+                    # If it's a number (Unix timestamp), convert it
+                    if isinstance(value, (int, float)):
+                        # Convert UTC timestamp to local datetime
+                        utc_dt = datetime.fromtimestamp(value, tz=timezone.utc)
+                        local_dt = utc_dt.astimezone()
+                        converted[key] = local_dt.isoformat()
+                    else:
+                        converted[key] = self._convert_utc_to_local(value)
+                else:
+                    converted[key] = self._convert_utc_to_local(value)
+            return converted
+        elif isinstance(data, list):
+            return [self._convert_utc_to_local(item) for item in data]
+        else:
+            return data
 
     async def _get_user_info(self) -> dict:
         """Get user information."""
